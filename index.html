@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Master Lab - Grade 9 Physics</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 10px; }
+        .score-board {
+            text-align: center;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+        .circuit-card {
+            border: 2px solid #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .series { background-color: #e67e22; }
+        .parallel { background-color: #9b59b6; }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .data-item { font-size: 1.1em; }
+        
+        input {
+            width: 60px;
+            padding: 5px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #219150; }
+        
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.5;
+        }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Circuit Master Lab ⚡</h1>
+    <div class="score-board">Score: <span id="score">0</span></div>
+
+    <div id="game-area">
+        <div class="circuit-card">
+            <div id="circuit-type" class="type-badge">SERIES</div>
+            <p><strong>Solve for the missing value:</strong></p>
+            <div class="data-grid" id="circuit-data">
+                </div>
+            <button onclick="checkAnswer()">Submit Calculation</button>
+        </div>
+        <div id="feedback"></div>
+    </div>
+    
+    <button id="next-btn" style="display:none; margin-top:10px; background-color: #3498db;" onclick="generateQuestion()">Next Challenge →</button>
+</div>
+
+<script>
+    let currentQuestion = {};
+    let score = 0;
+
+    const questions = [
+        { type: 'Series', values: { V1: 10, V2: 5, V3: 20 }, target: 'VT', unit: 'V', rule: 'Sum of Voltages' },
+        { type: 'Series', values: { IT: 30, I1: 30 }, target: 'I2', unit: 'A', rule: 'Current is Constant' },
+        { type: 'Parallel', values: { V1: 12, V2: 12 }, target: 'VT', unit: 'V', rule: 'Voltage is Constant' },
+        { type: 'Parallel', values: { I1: 2, I2: 6 }, target: 'IT', unit: 'A', rule: 'Sum of Currents' },
+        { type: 'Series', values: { VT: 50, V1: 20, V2: 10 }, target: 'V3', unit: 'V', rule: 'Sum of Voltages' },
+        { type: 'Parallel', values: { IT: 10, I1: 4 }, target: 'I2', unit: 'A', rule: 'Sum of Currents' }
+    ];
+
+    function generateQuestion() {
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        
+        const q = questions[Math.floor(Math.random() * questions.length)];
+        currentQuestion = q;
+        
+        const badge = document.getElementById('circuit-type');
+        badge.innerText = q.type.toUpperCase() + " CIRCUIT";
+        badge.className = 'type-badge ' + q.type.toLowerCase();
+        
+        let html = '';
+        for (let key in q.values) {
+            html += `<div class="data-item">${key}: ${q.values[key]}${q.unit}</div>`;
+        }
+        html += `<div class="data-item"><strong>${q.target}: </strong> <input type="number" id="user-ans"> ${q.unit}</div>`;
+        
+        document.getElementById('circuit-data').innerHTML = html;
+    }
+
+    function checkAnswer() {
+        const userVal = parseFloat(document.getElementById('user-ans').value);
+        let correctVal;
+        let explanation = "";
+
+        if (currentQuestion.type === 'Series') {
+            if (currentQuestion.unit === 'V') {
+                if (currentQuestion.target === 'VT') {
+                    correctVal = Object.values(currentQuestion.values).reduce((a, b) => a + b, 0);
+                    explanation = "In a <strong>Series</strong> circuit, the Total Potential Difference ($V_T$) is the sum of all individual loads ($V_1 + V_2 + ...$).";
+                } else {
+                    correctVal = currentQuestion.values.VT - (currentQuestion.values.V1 + currentQuestion.values.V2);
+                    explanation = "To find a missing load voltage in <strong>Series</strong>, subtract the known loads from the Total Voltage.";
+                }
+            } else {
+                correctVal = 30; // Based on constant rule
+                explanation = "In a <strong>Series</strong> circuit, the <strong>Current is the same</strong> everywhere ($I_T = I_1 = I_2$). No addition needed!";
+            }
+        } else { // Parallel
+            if (currentQuestion.unit === 'V') {
+                correctVal = 12; // Based on constant rule
+                explanation = "In a <strong>Parallel</strong> circuit, the <strong>Potential Difference is the same</strong> across all branches ($V_T = V_1 = V_2$).";
+            } else {
+                if (currentQuestion.target === 'IT') {
+                    correctVal = currentQuestion.values.I1 + currentQuestion.values.I2;
+                    explanation = "In a <strong>Parallel</strong> circuit, the total current is the <strong>sum</strong> of the currents in each branch.";
+                } else {
+                    correctVal = currentQuestion.values.IT - currentQuestion.values.I1;
+                    explanation = "In <strong>Parallel</strong>, the branches share the total current. $I_2 = I_T - I_1$.";
+                }
+            }
+        }
+
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+        
+        if (userVal === correctVal) {
+            feedback.innerHTML = "✅ <strong>Correct!</strong> " + explanation;
+            feedback.className = "correct";
+            score += 10;
+        } else {
+            feedback.innerHTML = `❌ <strong>Not quite.</strong> The correct answer was ${correctVal}${currentQuestion.unit}. <br><small>${explanation}</small>`;
+            feedback.className = "incorrect";
+            score = Math.max(0, score - 5);
+        }
+        
+        document.getElementById('score').innerText = score;
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    generateQuestion();
+</script>
+
+</body>
+</html>
